@@ -1,0 +1,72 @@
+1.
+CREATE VIEW v_wysokie_pensje AS
+SELECT * FROM employees 
+WHERE salary > 6000;
+
+2.
+CREATE OR REPLACE VIEW v_wysokie_pensje AS
+SELECT * FROM employees 
+WHERE salary > 12000;
+
+3.
+DROP VIEW v_wysokie_pensje;
+
+4.
+CREATE VIEW v_finance_employees AS
+SELECT e.employee_id, e.last_name, e.first_name
+FROM employees e
+JOIN departments d ON e.department_id = d.department_id
+WHERE d.department_name = 'Finance';
+
+5.
+CREATE VIEW v_pensje_pomiedzy AS
+SELECT employee_id, last_name, first_name, salary, job_id, email, hire_date
+from employees
+WHERE salary BETWEEN 5000 AND 12000;
+
+6.
+dodać: 		v_finance_employees - nie
+		v_pensje_pomiedzy - tak
+edytować:	v_finance_employees - tak
+		v_pensje_pomiedzy - tak
+usuwać:		v_finance_employees - tak
+		v_pensje_pomiedzy - tak	
+
+7.
+CREATE VIEW v_dept_stats AS
+SELECT d.department_id, d.department_name, 
+       COUNT(e.employee_id) AS emp_count, 
+       AVG(e.salary) AS avg_salary, 
+       MAX(e.salary) AS max_salary
+FROM employees e
+JOIN departments d ON e.department_id = d.department_id
+GROUP BY d.department_id, d.department_name
+HAVING COUNT(e.employee_id) >= 4;
+
+a.
+Nie mogę dodać danych do tego widoku
+
+8.
+CREATE VIEW v_pensje_pomiedzy AS
+SELECT employee_id, last_name, first_name, salary, job_id, email, hire_date
+from employees
+WHERE salary BETWEEN 5000 AND 12000
+WITH CHECK OPTION;
+
+a.
+Mogę dodać pracownika, który ma zarobki między 5000 a 12000.
+Nie mogę dodać pracownika, który ma zarobki powyżej 12000.
+
+9.
+CREATE MATERIALIZED VIEW v_managerowie AS
+SELECT DISTINCT m.employee_id, m.first_name, m.last_name, d.department_name
+FROM employees e
+JOIN employees m ON e.manager_id = m.employee_id
+JOIN departments d ON m.department_id = d.department_id;
+
+10.
+CREATE VIEW v_najlepiej_oplacani AS
+SELECT employee_id, last_name, salary
+FROM employees
+ORDER BY salary DESC
+FETCH FIRST 10 ROWS ONLY;
