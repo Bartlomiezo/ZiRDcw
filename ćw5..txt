@@ -1,0 +1,151 @@
+1.
+DECLARE
+    v_numer_max departments.department_id%TYPE;
+    v_nowy_dept_name departments.department_name%TYPE := 'EDUCATION';
+BEGIN
+    SELECT MAX(department_id) INTO v_numer_max FROM departments;
+    
+    INSERT INTO departments (department_id, department_name)
+    VALUES (v_numer_max + 10, v_nowy_dept_name);
+END;
+
+2.
+DECLARE
+    v_target_id departments.department_id%TYPE;
+BEGIN
+    SELECT MAX(department_id) INTO v_target_id 
+    FROM departments 
+    WHERE department_name = 'EDUCATION';
+    UPDATE departments 
+    SET location_id = 3000 
+    WHERE department_id = v_target_id;
+END;
+
+3.
+CREATE TABLE nowa (pole VARCHAR2(10));
+
+BEGIN
+    FOR i IN 1..10 LOOP
+        IF i = 4 OR i = 6 THEN
+            CONTINUE;
+        END IF;
+        INSERT INTO nowa (pole) VALUES (TO_CHAR(i));
+    END LOOP;
+END;
+
+4.
+DECLARE
+    v_kraj_rec countries%ROWTYPE;
+BEGIN
+    SELECT * INTO v_kraj_rec 
+    FROM countries 
+    WHERE country_id = 'CA';
+    DBMS_OUTPUT.PUT_LINE('Kraj: ' || v_kraj_rec.country_name);
+    DBMS_OUTPUT.PUT_LINE('ID Regionu: ' || v_kraj_rec.region_id);
+END;
+
+5.
+DECLARE
+    CURSOR c_podwyzka IS 
+        SELECT last_name, salary 
+        FROM employees 
+        WHERE department_id = 50;
+BEGIN
+    FOR pracownik IN c_podwyzka LOOP
+        IF pracownik.salary > 3100 THEN
+            DBMS_OUTPUT.PUT_LINE(pracownik.last_name || ': nie dawać podwyżki');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE(pracownik.last_name || ': dać podwyżkę');
+        END IF;
+    END LOOP;
+END;
+
+6.
+DECLARE
+    CURSOR c_emp_param(p_min NUMBER, p_max NUMBER, p_string VARCHAR2) IS
+        SELECT first_name, last_name, salary 
+        FROM employees
+        WHERE salary BETWEEN p_min AND p_max
+        AND (UPPER(first_name) LIKE '%' || UPPER(p_string) || '%');
+BEGIN
+    -- Punkt 6a: 1000-5000, litera 'a'
+    DBMS_OUTPUT.PUT_LINE('--- Wyniki dla 1000-5000 i litery A ---');
+    FOR r IN c_emp_param(1000, 5000, 'a') LOOP
+        DBMS_OUTPUT.PUT_LINE(r.first_name || ' ' || r.last_name || ': ' || r.salary);
+    END LOOP;
+
+    -- Punkt 6b: 5000-20000, litera 'u'
+    DBMS_OUTPUT.PUT_LINE('--- Wyniki dla 5000-20000 i litery U ---');
+    FOR r IN c_emp_param(5000, 20000, 'u') LOOP
+        DBMS_OUTPUT.PUT_LINE(r.first_name || ' ' || r.last_name || ': ' || r.salary);
+    END LOOP;
+END;
+
+9a.
+CREATE OR REPLACE PROCEDURE add_new_job(p_id VARCHAR2, p_title VARCHAR2) IS
+BEGIN
+    INSERT INTO jobs (job_id, job_title) VALUES (p_id, p_title);
+    DBMS_OUTPUT.PUT_LINE('Dodano zadanie: ' || p_title);
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd krytyczny: ' || SQLERRM);
+END;
+
+9b.
+CREATE OR REPLACE PROCEDURE update_job_title(p_id VARCHAR2, p_new_title VARCHAR2) IS
+    e_no_update EXCEPTION;
+BEGIN
+    UPDATE jobs SET job_title = p_new_title WHERE job_id = p_id;    
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE e_no_update;
+    END IF;
+EXCEPTION
+    WHEN e_no_update THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd: Nie znaleziono Job_id: ' || p_id || '. Nic nie zmieniono.');
+END;
+
+9c.
+CREATE OR REPLACE PROCEDURE delete_job_row(p_id VARCHAR2) IS
+    e_no_delete EXCEPTION;
+BEGIN
+    DELETE FROM jobs WHERE job_id = p_id;
+    
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE e_no_delete;
+    END IF;
+EXCEPTION
+    WHEN e_no_delete THEN
+        DBMS_OUTPUT.PUT_LINE('Błąd: Nie można usunąć. ID ' || p_id || ' nie istnieje.');
+END;
+
+9d.
+CREATE OR REPLACE PROCEDURE get_emp_data(
+    p_id IN employees.employee_id%TYPE,
+    p_salary OUT employees.salary%TYPE,
+    p_last_name OUT employees.last_name%TYPE
+) IS
+BEGIN
+    SELECT salary, last_name INTO p_salary, p_last_name 
+    FROM employees 
+    WHERE employee_id = p_id;
+END;
+
+9e.
+CREATE OR REPLACE PROCEDURE add_emp_secure(
+    p_last_name VARCHAR2,
+    p_email VARCHAR2,
+    p_job_id VARCHAR2 DEFAULT 'SA_REP',
+    p_salary NUMBER DEFAULT 2500,
+    p_hire_date DATE DEFAULT SYSDATE
+) IS
+    e_high_salary EXCEPTION;
+BEGIN
+    IF p_salary > 20000 THEN
+        RAISE e_high_salary;
+    END IF;
+    INSERT INTO employees (last_name, email, job_id, salary, hire_date)
+    VALUES (p_last_name, p_email, p_job_id, p_salary, p_hire_date);   
+EXCEPTION
+    WHEN e_high_salary THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Pensja powyżej 20000 jest niedozwolona!');
+END;
